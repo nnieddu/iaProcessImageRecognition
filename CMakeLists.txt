@@ -4,7 +4,7 @@ cmake_minimum_required( VERSION 3.6 )
 project( iaObjectDectorInProcess VERSION 0.1.0)
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 set(APP_ICON_RESOURCE_WINDOWS "./ico/appicon.rc")
 
 # set(CMAKE_BUILD_TYPE Debug) #<------------------------------
@@ -23,7 +23,7 @@ include_directories( ${OpenCV_INCLUDE_DIRS} )
 # Additional Library Directories
 link_directories( ${OpenCV_LIB_DIR} )
 # Additional Dependencies
-target_link_libraries( iaObjectDectorInProcess ${OpenCV_LIBS} ${CMAKE_THREAD_LIBS_INIT}) # ${CMAKE_THREAD_LIBS_INIT} )
+target_link_libraries( iaObjectDectorInProcess ${OpenCV_LIBS} ${CMAKE_THREAD_LIBS_INIT})
 
 
 

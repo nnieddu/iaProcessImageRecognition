@@ -1,3 +1,6 @@
+#include <Windows.h>
+#include <tchar.h>
+
 #include <string>
 #include <vector>
 #include <fstream>
@@ -26,18 +29,20 @@ void disableOrActivate(bool &activate, bool &exit)
 	}
 }
 
+
 int main()
 {
 	FpsCounter countFps;
 	bool activate = true;
 	bool exit = false;
-	screenshot screen("Dofus Retro");
+	screenshot screen(" ");
+	// screenshot screen("Dofus Retro");
 	cv::Mat frame;
 
 	detector detectObj(screen.getWidth(), screen.getHeight());
-	// cv::namedWindow("Result", cv::WINDOW_AUTOSIZE);
+	cv::namedWindow("Result", cv::WINDOW_AUTOSIZE);
 	// cv::namedWindow("Result", cv::WINDOW_NORMAL);
-	cv::namedWindow("Result", cv::WINDOW_GUI_EXPANDED );
+	// cv::namedWindow("Result", cv::WINDOW_GUI_EXPANDED );
 	// cv::setWindowProperty("Result", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
 	while (!exit)
 	{
@@ -49,6 +54,7 @@ int main()
 				frame = screen.get();
 				detectObj.start(frame);
 				cv::putText(frame, std::to_string(countFps.updateAndGet()), cv::Point(10, 25), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2);
+				// std::cout << countFps.updateAndGet() << std::endl;
 				cv::imshow("Result", frame);
 				cv::waitKey(1);
 		}

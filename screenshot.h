@@ -19,7 +19,6 @@ private:
 	HBITMAP m_hBitmap;
 	BITMAPINFO m_bitmapinfo;
 
-  RECT rcClient;
 	int m_width;
 	int m_height;
 
