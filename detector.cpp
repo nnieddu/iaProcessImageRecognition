@@ -124,9 +124,8 @@ const float INPUT_WIDTH = 640.0;
 const float INPUT_HEIGHT = 640.0;
 const float SCORE_THRESHOLD = 0.2;
 const float NMS_THRESHOLD = 0.4;
-// const float CONFIDENCE_THRESHOLD = 0.4;
-const float CONFIDENCE_THRESHOLD = 0.75;
-// ---------------------------------//
+const float CONFIDENCE_THRESHOLD = 0.4;
+// const float CONFIDENCE_THRESHOLD = 0.75;
 
 struct Detection
 {
@@ -169,7 +168,6 @@ void detect(cv::Mat &image, cv::dnn::Net &net, std::vector<Detection> &output, c
 	std::vector<float> confidences;
 	std::vector<cv::Rect> boxes;
 
-	// -------------------------------------------
 	for (int i = 0; i < rows; ++i)
 	{
 
@@ -197,27 +195,11 @@ void detect(cv::Mat &image, cv::dnn::Net &net, std::vector<Detection> &output, c
 				int width = int(w * x_factor);
 				int height = int(h * y_factor);
 				boxes.push_back(cv::Rect(left, top, width, height));
-
-				// -----------------------------------------
-				// std::vector<int> nms_result;
-				// cv::dnn::NMSBoxes(boxes, confidences, SCORE_THRESHOLD, NMS_THRESHOLD, nms_result);
-				// for (int i = 0; i < nms_result.size(); i++)
-				// {
-				// 	int idx = nms_result[i];
-				// 	Detection result;
-				// 	result.class_id = class_ids[idx];
-				// 	result.confidence = confidences[idx];
-				// 	result.box = boxes[idx];
-				// 	output.push_back(result);
-				// 	return;
-				// }
-				// -----------------------------------------
 			}
 		}
 
 		data += 85;
 	}
-	// -------------------------------------------
 
 	std::vector<int> nms_result;
 	cv::dnn::NMSBoxes(boxes, confidences, SCORE_THRESHOLD, NMS_THRESHOLD, nms_result);
@@ -236,18 +218,7 @@ void detector::detectYoloV5(cv::Mat &image)
 {
 	std::vector<Detection> output;
 	detect(image, m_net, output, m_classes);
-	int detections = output.size();
-	std::cout << "DETECITONS = " << detections << std::endl;
-	// for (int i = 0; i < detections; ++i)
-	// {
-	// 	auto detection = output[i];
-	// 	auto box = detection.box;
-	// 	auto classId = detection.class_id;
-	// 	const auto color = colors[classId % colors.size()];
-	// 	cv::rectangle(image, box, colors[classId % colors.size()], 3);
-	// 	cv::rectangle(image, cv::Point(box.x, box.y - 20), cv::Point(box.x + box.width, box.y), colors[classId % colors.size()], cv::FILLED);
-	// 	cv::putText(image, std::to_string(detection.confidence) + "  " + m_classes[classId], cv::Point(box.x, box.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0));
-	// }
+	size_t detections = output.size();
 	for (int i = 0; i < detections; ++i)
 	{
 		auto detection = output[i];
@@ -292,11 +263,12 @@ detector::detector(int width, int height)
 	std::string ConfigPath = str_exe_path + "\\" + MODEL_FOLDER + YOLO_CFG_FILE_NAME;
 	std::string datasetLabelsPath = str_exe_path + "\\" + MODEL_FOLDER + LABELS_FILE_NAME;
 
-	std::vector<std::string> datasetLabels;
+	// std::vector<std::string> datasetLabels;
 	std::ifstream ifs(datasetLabelsPath);
 	std::string line;
 	while (getline(ifs, line))
-		datasetLabels.push_back(line);
+		m_classes.push_back(line);
+	std::cout << "DATASET LABEL SIZE = " << m_classes.size() << std::endl;
 	// -----------------------------
 	if (YOLO_CFG_FILE_NAME == "")
 	{
@@ -310,12 +282,12 @@ detector::detector(int width, int height)
 		yolov3 = true;
 		std::cout << "=== YOLOv3 LOADED ===" << std::endl;
 	}
-	// if (cv::cuda::getCudaEnabledDeviceCount() > 0)
-	// {
-	// 	m_net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
-	// 	m_net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA_FP16);
-	// }
-	// else 
+	if (cv::cuda::getCudaEnabledDeviceCount() > 0)
+	{
+		m_net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
+		m_net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA_FP16);
+	}
+	else 
 	if 
 	(cv::ocl::haveOpenCL())
 	{

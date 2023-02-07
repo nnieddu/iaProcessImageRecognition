@@ -36,14 +36,15 @@ int main()
 	bool activate = true;
 	bool exit = false;
 	screenshot screen(" ");
-	// screenshot screen("Dofus Retro");
-	cv::Mat frame;
 
 	detector detectObj(screen.getWidth(), screen.getHeight());
+	cv::Mat frame;
+
 	cv::namedWindow("Result", cv::WINDOW_AUTOSIZE);
 	// cv::namedWindow("Result", cv::WINDOW_NORMAL);
 	// cv::namedWindow("Result", cv::WINDOW_GUI_EXPANDED );
 	// cv::setWindowProperty("Result", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
+
 	while (!exit)
 	{
 		disableOrActivate(activate, exit);

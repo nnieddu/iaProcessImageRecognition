@@ -16,7 +16,6 @@ screenshot::screenshot(std::string proccessName = "") {
 m_left = 0;
 m_top = 0;
 
-
 HWND hwnd = FindWindow(NULL, proccessName.c_str());
 if (hwnd)
 {
