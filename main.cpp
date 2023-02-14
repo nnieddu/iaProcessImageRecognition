@@ -36,6 +36,7 @@ int main()
 	bool activate = true;
 	bool exit = false;
 	screenshot screen(" ");
+	// screenshot screen("Dofus Retro");
 
 	detector detectObj(screen.getWidth(), screen.getHeight());
 	cv::Mat frame;

@@ -2,117 +2,178 @@
 #include "defines.h"
 #include <Windows.h>
 
-void detector::draw_box(float conf, int left, int top, int right, int bottom, cv::Mat &frame)
+
+
+struct Output {
+	int id;             //result category id
+	float confidence;   //result confidence
+	cv::Rect box;       //rectangle
+};
+
+void detector::detectYoloV7(cv::Mat &image)
 {
-	cv::rectangle(frame, cv::Point(left, top), cv::Point(right, bottom), cv::Scalar(0, 0, 255));
-	std::string label = cv::format("%.2f", conf);
-	putText(frame, label, cv::Point(left, top), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 255));
+	std::vector<Output> output;
+
+	int inpWidth = 640;//parser.get<int>("width");
+	int inpHeight = 640;//parser.get<int>("height");
+	float scale = 1.0/ 255;// parser.get<float>("scale");
+	cv::Scalar mean0 = cv::Scalar(0, 0, 0);//parser.get<Scalar>("mean");
+	//Scalar mean0 = Scalar(104, 117, 123);
+	//Scalar mean0 = Scalar(114, 114, 114);
+	bool swapRB = true; //parser.get<bool>("rgb");
+	bool crop = false;
+	float confThreshold = 0.5f;// parser.get<float>("thr");
+	float nmsThreshold = 0.4f;//parser.get<float>("nms");
+	int backend = 5;// parser.get<int>("backend");
+	int target = 6;// parser.get<int>("target")
+
+
+	// yolov7_a.Preprocess(frame, net, Size(inpWidth, inpHeight), scale, mean0, swapRB, crop);
+	// void Yolo7::Preprocess(const Mat& frame, Net& net, Size inpSize, float scale_a, const Scalar& mean_a, bool swapRB, bool crop)
+		static cv::Mat blob;
+		cv::Size inpSize(inpWidth, inpHeight);
+	// Create a 4D blob from a frame.
+	if (inpSize.width <= 0) inpSize.width = image.cols;
+	if (inpSize.height <= 0) inpSize.height = image.rows;
+	cv::dnn::blobFromImage(image, blob, scale, inpSize, mean0, swapRB, crop, CV_32F);
+
+	// Run a model.
+	//net.setInput(blob, "", scale, mean_a);
+	m_net.setInput(blob);
+
+
+	////////////////////
+	std::vector<cv::Mat> outs;
+	m_net.forward(outs, m_net.getUnconnectedOutLayersNames());
+	// predictionsQueue.push(outs);
+	// processedFramesQueue.push(frame);
+
 }
 
-// std::vector<cv::String> detector::get_outputs_names(const cv::dnn::Net &net)
-// {
-// 	static std::vector<cv::String> names;
-// 	if (names.empty())
-// 	{
-// 		std::vector<int> outLayers = net.getUnconnectedOutLayers();
-// 		std::vector<cv::String> layersNames = net.getLayerNames();
-// 		names.resize(outLayers.size());
-// 		for (size_t i = 0; i < outLayers.size(); ++i)
-// 			names[i] = layersNames[outLayers[i] - 1];
-// 	}
-// 	return names;
-// }
 
-void detector::postprocess(cv::Mat &frame, const std::vector<cv::Mat> &outs)
-{
-	std::vector<int> classes_ids;
-	std::vector<float> confidences;
-	std::vector<cv::Rect> boxes;
 
-	for (size_t i = 0; i < outs.size(); ++i)
-	{
-		float *data = (float *)outs[i].data;
-		for (int j = 0; j < outs[i].rows; ++j, data += outs[i].cols)
-		{
-			cv::Mat scores = outs[i].row(j).colRange(5, outs[i].cols);
-			cv::Point class_id_point;
-			double confidence;
-			cv::minMaxLoc(scores, 0, &confidence, 0, &class_id_point);
-			if (confidence > m_confidence)
-			{
-				int centerX = (int)(data[0] * frame.cols);
-				int centerY = (int)(data[1] * frame.rows);
-				int width = (int)(data[2] * frame.cols);
-				int height = (int)(data[3] * frame.rows);
-				int left = centerX - width / 2;
-				int top = centerY - height / 2;
 
-				classes_ids.push_back(class_id_point.x);
-				confidences.push_back((float)confidence);
-				boxes.push_back(cv::Rect(left, top, width, height));
-			}
-		}
-	}
 
-	// exclusion of overlapping boxes and other trash
-	std::vector<int> indices;
-	cv::dnn::NMSBoxes(boxes, confidences, m_confidence, m_threshold, indices);
 
-	for (size_t i = 0; i < indices.size(); ++i)
-	{
-		int idx = indices[i];
-		cv::Rect box = boxes[idx];
-		draw_box(confidences[idx], box.x, box.y,
-						 box.x + box.width, box.y + box.height, frame);
 
-		// todo: check if the aim is enabled
-		// aimbot::aim_to(box.x, box.y, box.width, box.height);
-	}
+
+
+
+
+void detector::draw_box(float conf, int left, int top, int right, int bottom, cv::Mat& frame) {
+    cv::rectangle(frame, cv::Point(left, top), cv::Point(right, bottom), cv::Scalar(0, 0, 255));
+    std::string label = cv::format("%.2f", conf);
+    putText(frame, label, cv::Point(left, top), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 255));
+}
+
+std::vector<cv::String> detector::get_outputs_names(const cv::dnn::Net& net) {
+    static std::vector<cv::String> names;
+    if (names.empty()) {
+        std::vector<int> outLayers =
+            net.getUnconnectedOutLayers();
+        std::vector<cv::String> layersNames =
+            net.getLayerNames();
+        names.resize(outLayers.size());
+        for (size_t i = 0; i < outLayers.size(); ++i)
+            names[i] = layersNames[outLayers[i] - 1];
+    }
+    return names;
+}
+
+void detector::postprocess(cv::Mat& frame, const std::vector<cv::Mat>& outs) {
+    std::vector<int> classes_ids;
+    std::vector<float> confidences;
+    std::vector<cv::Rect> boxes;
+
+    for (size_t i = 0; i < outs.size(); ++i) {
+        float* data = (float*)outs[i].data;
+        for (int j = 0; j < outs[i].rows; ++j, data += outs[i].cols) {
+            cv::Mat scores = outs[i].row(j).colRange(5, outs[i].cols);
+            cv::Point class_id_point;
+            double confidence;
+            cv::minMaxLoc(scores, 0, &confidence, 0, &class_id_point);
+            if (confidence > m_confidence) {
+                int centerX = (int)(data[0] * frame.cols);
+                int centerY = (int)(data[1] * frame.rows);
+                int width = (int)(data[2] * frame.cols);
+                int height = (int)(data[3] * frame.rows);
+                int left = centerX - width / 2;
+                int top = centerY - height / 2;
+
+                classes_ids.push_back(class_id_point.x);
+                confidences.push_back((float)confidence);
+                boxes.push_back(cv::Rect(left, top, width, height));
+            }
+        }
+    }
+
+    // exclusion of overlapping boxes and other trash
+    std::vector<int> indices;
+    cv::dnn::NMSBoxes(boxes, confidences, m_confidence, m_threshold, indices);
+    for (size_t i = 0; i < indices.size(); ++i) {
+        int idx = indices[i];
+        cv::Rect box = boxes[idx];
+        draw_box(confidences[idx], box.x, box.y,
+            box.x + box.width, box.y + box.height, frame);
+
+    }
+
+    return;
 }
 
 void detector::detectYoloV3(cv::Mat &image)
 {
 	cv::Mat blob;
-	cv::dnn::blobFromImage(image, blob, 1 / 255.0, cv::Size(416, 416), cv::Scalar(), true, false);
+    cv::dnn::blobFromImage(image, blob, 1 / 255.0,
+        cv::Size(m_activation_range, m_activation_range), cv::Scalar(0, 0, 0), true, false);
 
 	// Set the input to the network
 	m_net.setInput(blob);
+		std::vector<cv::Mat> outs;
+    postprocess(image, outs);
+
+    // std::string label = cv::format("FPS: %u", (unsigned int)fps);
+    // cv::putText(image, label, cv::Point(0, 15),
+    //     cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
+
+    cv::Mat detected_frame = image;
+    detected_frame.convertTo(image, CV_8U);
 
 	// Run forward pass
-	cv::Mat output = m_net.forward();
+	// cv::Mat output = m_net.forward();
 
-	// Get the confidence scores and bounding box locations
-	cv::Mat scores = output.row(0).colRange(5, output.cols);
-	cv::Mat boxes = output.row(0).colRange(0, 4);
-	cv::Mat classes = output.row(0).colRange(5, output.cols);
+	// // Get the confidence scores and bounding box locations
+	// cv::Mat scores = output.row(0).colRange(5, output.cols);
+	// cv::Mat boxes = output.row(0).colRange(0, 4);
+	// cv::Mat classes = output.row(0).colRange(5, output.cols);
 
-	// Perform non-maximum suppression to remove overlapping boxes
-	cv::Mat indices;
-	// cv::dnn::NMSBoxes(boxes, scores, 0.5, 0.4, indices);
+	// // Perform non-maximum suppression to remove overlapping boxes
+	// cv::Mat indices;
+	// // cv::dnn::NMSBoxes(boxes, scores, 0.5, 0.4, indices);
 
-	// Draw bounding boxes around the objects
-	for (int i = 0; i < indices.rows; ++i)
-	{
-		int idx = indices.at<int>(i, 0);
-		float confidence = scores.at<float>(idx, 0);
+	// // Draw bounding boxes around the objects
+	// for (int i = 0; i < indices.rows; ++i)
+	// {
+	// 	int idx = indices.at<int>(i, 0);
+	// 	float confidence = scores.at<float>(idx, 0);
 
-		if (confidence > 0.5)
-		{
-			float x = boxes.at<float>(idx, 0);
-			float y = boxes.at<float>(idx, 1);
-			float w = boxes.at<float>(idx, 2);
-			float h = boxes.at<float>(idx, 3);
-			int classId = classes.at<float>(idx, 0);
+	// 	if (confidence > 0.5)
+	// 	{
+	// 		float x = boxes.at<float>(idx, 0);
+	// 		float y = boxes.at<float>(idx, 1);
+	// 		float w = boxes.at<float>(idx, 2);
+	// 		float h = boxes.at<float>(idx, 3);
+	// 		int classId = classes.at<float>(idx, 0);
 
-			cv::Rect object((int)(x * image.cols), (int)(y * image.rows),
-											(int)(w * image.cols), (int)(h * image.rows));
-			rectangle(image, object, cv::Scalar(0, 255, 0), 2);
+	// 		cv::Rect object((int)(x * image.cols), (int)(y * image.rows),
+	// 										(int)(w * image.cols), (int)(h * image.rows));
+	// 		rectangle(image, object, cv::Scalar(0, 255, 0), 2);
 
-			// Display object label
-			cv::String label = cv::format("%.2f", confidence);
-			putText(image, label, cv::Point(x, y), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
-		}
-	}
+	// 		// Display object label
+	// 		cv::String label = cv::format("%.2f", confidence);
+	// 		putText(image, label, cv::Point(x, y), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
+	// 	}
+	// }
 }
 
 
@@ -120,8 +181,10 @@ void detector::detectYoloV3(cv::Mat &image)
 
 const std::vector<cv::Scalar> colors = {cv::Scalar(255, 255, 0), cv::Scalar(0, 255, 0), cv::Scalar(0, 255, 255), cv::Scalar(255, 0, 0)};
 
-const float INPUT_WIDTH = 640.0;
-const float INPUT_HEIGHT = 640.0;
+const float INPUT_WIDTH = 640.0; //yolo5
+const float INPUT_HEIGHT = 640.0; // yolo5
+// const float INPUT_WIDTH = 416.0; //yolo3 tiny
+// const float INPUT_HEIGHT = 416.0; // yolo3 tiny
 const float SCORE_THRESHOLD = 0.2;
 const float NMS_THRESHOLD = 0.4;
 const float CONFIDENCE_THRESHOLD = 0.4;
@@ -151,11 +214,12 @@ void detect(cv::Mat &image, cv::dnn::Net &net, std::vector<Detection> &output, c
 	auto input_image = format_yolov5(image);
 
 	cv::dnn::blobFromImage(input_image, blob, 1. / 255., cv::Size(INPUT_WIDTH, INPUT_HEIGHT), cv::Scalar(), true, false);
+				
 	net.setInput(blob);
 	std::vector<cv::Mat> outputs;
 
 	net.forward(outputs, net.getUnconnectedOutLayersNames()); ////// PERF DOWN
-
+	
 	float x_factor = input_image.cols / INPUT_WIDTH;
 	float y_factor = input_image.rows / INPUT_HEIGHT;
 
@@ -175,27 +239,27 @@ void detect(cv::Mat &image, cv::dnn::Net &net, std::vector<Detection> &output, c
 		if (confidence >= CONFIDENCE_THRESHOLD)
 		{
 			float *classes_scores = data + 5;
-			cv::Mat scores(1, className.size(), CV_32FC1, classes_scores);
+			// cv::Mat scores(1, className.size(), CV_32FC1, classes_scores); ////////////////////////
 			cv::Point class_id;
 			double max_class_score;
-			minMaxLoc(scores, 0, &max_class_score, 0, &class_id);
-			if (max_class_score > SCORE_THRESHOLD)
-			{
+			// minMaxLoc(scores, 0, &max_class_score, 0, &class_id);
+			// if (max_class_score > SCORE_THRESHOLD)
+			// {
+			// 	std::cout << "YOUPI" << std::endl;
+			// 	confidences.push_back(confidence);
 
-				confidences.push_back(confidence);
+			// 	class_ids.push_back(class_id.x);
 
-				class_ids.push_back(class_id.x);
-
-				float x = data[0];
-				float y = data[1];
-				float w = data[2];
-				float h = data[3];
-				int left = int((x - 0.5 * w) * x_factor);
-				int top = int((y - 0.5 * h) * y_factor);
-				int width = int(w * x_factor);
-				int height = int(h * y_factor);
-				boxes.push_back(cv::Rect(left, top, width, height));
-			}
+			// 	float x = data[0];
+			// 	float y = data[1];
+			// 	float w = data[2];
+			// 	float h = data[3];
+			// 	int left = int((x - 0.5 * w) * x_factor);
+			// 	int top = int((y - 0.5 * h) * y_factor);
+			// 	int width = int(w * x_factor);
+			// 	int height = int(h * y_factor);
+			// 	boxes.push_back(cv::Rect(left, top, width, height));
+			// }
 		}
 
 		data += 85;
@@ -227,27 +291,25 @@ void detector::detectYoloV5(cv::Mat &image)
 
 		const auto color = colors[classId % colors.size()];
 
-		if (m_classes[classId] == "person")
-		{
-			cv::rectangle(image, box, colors[classId % colors.size()], 3);
-			cv::rectangle(image, cv::Point(box.x, box.y - 20), cv::Point(box.x + box.width, box.y), colors[classId % colors.size()], cv::FILLED);
-			cv::putText(image, std::to_string(detection.confidence) + "  " + m_classes[classId], cv::Point(box.x, box.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0));
-		}
+		cv::rectangle(image, box, colors[classId % colors.size()], 3);
+		cv::rectangle(image, cv::Point(box.x, box.y - 20), cv::Point(box.x + box.width, box.y), colors[classId % colors.size()], cv::FILLED);
+		cv::putText(image, std::to_string(detection.confidence) + "  " + m_classes[classId], cv::Point(box.x, box.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0));
 	}
 }
 
 void detector::start(cv::Mat &image)
 {
-	if (yolov3)
-	{
-		// std::cout << "=== detectYoloV3 ===" << std::endl;
-		detectYoloV3(image);
-	}
-	else
-	{
+	// if (yolov3)
+	// {
+	// 	// std::cout << "=== detectYoloV3 ===" << std::endl;
+	// 	detectYoloV3(image);
+	// }
+	// else
+	// {
 		// std::cout << "=== detectYoloV5 ===" << std::endl;
 		detectYoloV5(image);
-	}
+		// detectYoloV7(image); WIP
+	// }
 
 }
 
@@ -284,6 +346,7 @@ detector::detector(int width, int height)
 	}
 	if (cv::cuda::getCudaEnabledDeviceCount() > 0)
 	{
+		std::cout << "=== CUDA TARGET ===" << std::endl;
 		m_net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
 		m_net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA_FP16);
 	}
@@ -291,6 +354,7 @@ detector::detector(int width, int height)
 	if 
 	(cv::ocl::haveOpenCL())
 	{
+		std::cout << "=== OPENCL TARGET ===" << std::endl;
 		m_net.setPreferableBackend(cv::dnn::DNN_BACKEND_DEFAULT);
 		m_net.setPreferableTarget(cv::dnn::DNN_TARGET_OPENCL);
 		cv::ocl::setUseOpenCL(true);
@@ -298,7 +362,10 @@ detector::detector(int width, int height)
 	}
 	else
 	{
+		std::cout << "=== CPU TARGET ===" << std::endl;
 		m_net.setPreferableBackend(cv::dnn::DNN_BACKEND_DEFAULT);
 		m_net.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
 	}
+
+ m_activation_range = static_cast<int>(ACTIVATION_RANGE / 2);
 }

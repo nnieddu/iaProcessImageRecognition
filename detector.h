@@ -19,16 +19,20 @@ public:
 	cv::dnn::Net m_net;
 	std::vector<std::string> m_classes;
 private:
-	float m_confidence = 0.5f;
+float m_confidence = 0.5f;
 	float m_threshold = 0.35f;
+	int m_activation_range = 125;
 	int width;
 	int height;
 
 	void postprocess(cv::Mat &frame, const std::vector<cv::Mat> &outs);
 	void draw_box(float conf, int left, int top, int right, int bottom, cv::Mat &frame);
+	std::vector<cv::String> get_outputs_names(const cv::dnn::Net& net);
+
 
 	void detectYoloV3(cv::Mat &image);
 	void detectYoloV5(cv::Mat &image);
+	void detectYoloV7(cv::Mat &image);
 
 	// std::vector<cv::String> get_outputs_names(const cv::dnn::Net &net);
 };
