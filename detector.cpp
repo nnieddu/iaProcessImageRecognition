@@ -79,6 +79,7 @@ void detector::detect(cv::Mat &image, cv::dnn::Net &net, std::vector<Detection> 
 		output.push_back(result);
 	}
 }
+}
 
 void detector::detectYolo(cv::Mat &image)
 {
@@ -142,6 +143,4 @@ detector::detector(int width, int height) : INPUT_WIDTH(640.0), INPUT_HEIGHT(640
 		m_net.setPreferableBackend(cv::dnn::DNN_BACKEND_DEFAULT);
 		m_net.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
 	}
-
- m_activation_range = static_cast<int>(ACTIVATION_RANGE / 2);
 }
