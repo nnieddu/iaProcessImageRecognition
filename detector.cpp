@@ -1,4 +1,6 @@
 #include "detector.h"
+#include "defines.h"
+#include <Windows.h>
 
 const std::vector<cv::Scalar> colors = {cv::Scalar(255, 255, 0), cv::Scalar(0, 255, 0), cv::Scalar(0, 255, 255), cv::Scalar(255, 0, 0)};
 
@@ -19,12 +21,12 @@ void detector::detect(cv::Mat &image, cv::dnn::Net &net, std::vector<Detection> 
 	auto input_image = format_yolov5(image);
 
 	cv::dnn::blobFromImage(input_image, blob, 1. / 255., cv::Size(INPUT_WIDTH, INPUT_HEIGHT), cv::Scalar(), true, false);
-				
+
 	net.setInput(blob);
 	std::vector<cv::Mat> outputs;
 
 	net.forward(outputs, net.getUnconnectedOutLayersNames()); ////// PERF DOWN
-	
+
 	float x_factor = input_image.cols / INPUT_WIDTH;
 	float y_factor = input_image.rows / INPUT_HEIGHT;
 
@@ -44,7 +46,7 @@ void detector::detect(cv::Mat &image, cv::dnn::Net &net, std::vector<Detection> 
 		if (confidence >= CONFIDENCE_THRESHOLD)
 		{
 			float *classes_scores = data + 5;
-			cv::Mat scores(1, className.size(), CV_32FC1, classes_scores); ///////////
+			cv::Mat scores(1, className.size(), CV_32FC1, classes_scores); ////////////////////////
 			cv::Point class_id;
 			double max_class_score;
 			minMaxLoc(scores, 0, &max_class_score, 0, &class_id);
@@ -52,16 +54,18 @@ void detector::detect(cv::Mat &image, cv::dnn::Net &net, std::vector<Detection> 
 			{
 				confidences.push_back(confidence);
 
-			// 	float x = data[0];
-			// 	float y = data[1];
-			// 	float w = data[2];
-			// 	float h = data[3];
-			// 	int left = int((x - 0.5 * w) * x_factor);
-			// 	int top = int((y - 0.5 * h) * y_factor);
-			// 	int width = int(w * x_factor);
-			// 	int height = int(h * y_factor);
-			// 	boxes.push_back(cv::Rect(left, top, width, height));
-			// }
+				class_ids.push_back(class_id.x);
+
+				float x = data[0];
+				float y = data[1];
+				float w = data[2];
+				float h = data[3];
+				int left = int((x - 0.5 * w) * x_factor);
+				int top = int((y - 0.5 * h) * y_factor);
+				int width = int(w * x_factor);
+				int height = int(h * y_factor);
+				boxes.push_back(cv::Rect(left, top, width, height));
+			}
 		}
 
 		data += 85;
@@ -79,12 +83,11 @@ void detector::detect(cv::Mat &image, cv::dnn::Net &net, std::vector<Detection> 
 		output.push_back(result);
 	}
 }
-}
 
 void detector::detectYolo(cv::Mat &image)
 {
 	std::vector<Detection> output;
-	this->detect(image, m_net, output, m_classes);
+	detect(image, m_net, output, m_classes);
 	size_t detections = output.size();
 	for (int i = 0; i < detections; ++i)
 	{
@@ -119,17 +122,16 @@ detector::detector(int width, int height) : INPUT_WIDTH(640.0), INPUT_HEIGHT(640
 	while (getline(ifs, line))
 		m_classes.push_back(line);
 	std::cout << "DATASET LABEL SIZE = " << m_classes.size() << std::endl;
-	
+
 	m_net = cv::dnn::readNet(ModelPath);
-		
+
 	if (cv::cuda::getCudaEnabledDeviceCount() > 0)
 	{
 		std::cout << "=== CUDA TARGET ===" << std::endl;
 		m_net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
 		m_net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA_FP16);
 	}
-	else 
-	if (cv::ocl::haveOpenCL())
+	else if (cv::ocl::haveOpenCL())
 	{
 		std::cout << "=== OPENCL TARGET ===" << std::endl;
 		m_net.setPreferableBackend(cv::dnn::DNN_BACKEND_DEFAULT);
