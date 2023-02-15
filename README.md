@@ -1,4 +1,4 @@
-# iaProcessImageRecognition   
+# (WIP) iaProcessImageRecognition   
    
 This software used Windows library for catch screenshot of a process and for keyboard handling.   
 An Unix version will be shared later.   
