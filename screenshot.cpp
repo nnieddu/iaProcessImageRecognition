@@ -1,4 +1,4 @@
-#include "screenshot.h"
+#include "screenshot.hpp"
 
 #include <windows.h>
 #include <tchar.h>

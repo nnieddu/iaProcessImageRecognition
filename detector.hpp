@@ -32,13 +32,14 @@ private:
 		cv::Rect box;
 	};
 
-	const float INPUT_WIDTH;
-	const float INPUT_HEIGHT;
+	// non-maximum suppression (NMS) algorithm
+	const float INPUT_WIDTH = 640.0;
+	const float INPUT_HEIGHT = 640.0;
 
 	const float SCORE_THRESHOLD = 0.2;
 	const float NMS_THRESHOLD = 0.4;
-	const float CONFIDENCE_THRESHOLD = 0.4;
+	const float CONFIDENCE_THRESHOLD = 0.2;
 
 	void detect(cv::Mat &image, cv::dnn::Net &net, std::vector<Detection> &output, const std::vector<std::string> &className);
-	cv::Mat format_yolov5(const cv::Mat &source);
+	cv::Mat format_yolo(const cv::Mat &source);
 };

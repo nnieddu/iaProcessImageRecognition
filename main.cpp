@@ -11,9 +11,9 @@
 #include <opencv2/highgui/highgui_c.h>
 
 #include "defines.h"
-#include "screenshot.h"
-#include "detector.h"
-#include "fpsCounter.h"
+#include "screenshot.hpp"
+#include "detector.hpp"
+#include "fpsCounter.hpp"
 
 void disableOrActivate(bool &activate, bool &exit)
 {

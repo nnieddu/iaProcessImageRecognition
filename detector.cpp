@@ -1,10 +1,10 @@
-#include "detector.h"
+#include "detector.hpp"
 #include "defines.h"
 #include <Windows.h>
 
 const std::vector<cv::Scalar> colors = {cv::Scalar(255, 255, 0), cv::Scalar(0, 255, 0), cv::Scalar(0, 255, 255), cv::Scalar(255, 0, 0)};
 
-cv::Mat detector::format_yolov5(const cv::Mat &source)
+cv::Mat detector::format_yolo(const cv::Mat &source)
 {
 	int col = source.cols;
 	int row = source.rows;
@@ -17,43 +17,35 @@ cv::Mat detector::format_yolov5(const cv::Mat &source)
 void detector::detect(cv::Mat &image, cv::dnn::Net &net, std::vector<Detection> &output, const std::vector<std::string> &className)
 {
 	cv::Mat blob;
-
-	auto input_image = format_yolov5(image);
-
-	cv::dnn::blobFromImage(input_image, blob, 1. / 255., cv::Size(INPUT_WIDTH, INPUT_HEIGHT), cv::Scalar(), true, false);
-
+	auto input_image = format_yolo(image);
+	cv::dnn::blobFromImage(input_image, blob, 1 / 255.0, cv::Size(INPUT_WIDTH, INPUT_HEIGHT), cv::Scalar(), true, false, CV_32F);
 	net.setInput(blob);
 	std::vector<cv::Mat> outputs;
-
-	net.forward(outputs, net.getUnconnectedOutLayersNames()); ////// PERF DOWN
-
-	float x_factor = input_image.cols / INPUT_WIDTH;
-	float y_factor = input_image.rows / INPUT_HEIGHT;
-
-	float *data = (float *)outputs[0].data;
-
-	const int dimensions = 85;
-	const int rows = 25200;
+	net.forward(outputs, net.getUnconnectedOutLayersNames());
 
 	std::vector<int> class_ids;
 	std::vector<float> confidences;
 	std::vector<cv::Rect> boxes;
 
-	for (int i = 0; i < rows; ++i)
-	{
+	float x_factor = input_image.cols / INPUT_WIDTH;
+	float y_factor = input_image.rows / INPUT_HEIGHT;
+	float *data = (float *)outputs[0].data;
+	const int rows = 25200;
+	const int dimensions = 85;
 
+	for (int i = 0; i < rows; ++i, data += dimensions)
+	{
 		float confidence = data[4];
 		if (confidence >= CONFIDENCE_THRESHOLD)
 		{
 			float *classes_scores = data + 5;
-			cv::Mat scores(1, className.size(), CV_32FC1, classes_scores); ////////////////////////
+			cv::Mat scores(1, className.size(), CV_32FC1, classes_scores);
 			cv::Point class_id;
 			double max_class_score;
 			minMaxLoc(scores, 0, &max_class_score, 0, &class_id);
 			if (max_class_score > SCORE_THRESHOLD)
 			{
 				confidences.push_back(confidence);
-
 				class_ids.push_back(class_id.x);
 
 				float x = data[0];
@@ -67,20 +59,22 @@ void detector::detect(cv::Mat &image, cv::dnn::Net &net, std::vector<Detection> 
 				boxes.push_back(cv::Rect(left, top, width, height));
 			}
 		}
-
-		data += 85;
 	}
 
-	std::vector<int> nms_result;
-	cv::dnn::NMSBoxes(boxes, confidences, SCORE_THRESHOLD, NMS_THRESHOLD, nms_result);
-	for (int i = 0; i < nms_result.size(); i++)
+	// Apply non-maximum suppression to remove overlapping boxes
+	std::vector<int> nms_indices;
+	cv::dnn::NMSBoxes(boxes, confidences, CONFIDENCE_THRESHOLD, NMS_THRESHOLD, nms_indices);
+	// output.clear();
+	// for (auto idx : nms_indices)
+	// {
+	for (int i = 0; i < nms_indices.size(); i++)
 	{
-		int idx = nms_result[i];
-		Detection result;
-		result.class_id = class_ids[idx];
-		result.confidence = confidences[idx];
-		result.box = boxes[idx];
-		output.push_back(result);
+		int idx = nms_indices[i];
+		Detection detection;
+		detection.class_id = class_ids[idx];
+		detection.confidence = confidences[idx];
+		detection.box = boxes[idx];
+		output.push_back(detection);
 	}
 }
 
@@ -97,19 +91,16 @@ void detector::detectYolo(cv::Mat &image)
 
 		const auto color = colors[classId % colors.size()];
 
-		cv::rectangle(image, box, colors[classId % colors.size()], 3);
-		cv::rectangle(image, cv::Point(box.x, box.y - 20), cv::Point(box.x + box.width, box.y), colors[classId % colors.size()], cv::FILLED);
+		cv::rectangle(image, box, color, 3);
+		cv::rectangle(image, cv::Point(box.x, box.y - 20), cv::Point(box.x + box.width, box.y), color, cv::FILLED);
 		cv::putText(image, std::to_string(detection.confidence) + "  " + m_classes[classId], cv::Point(box.x, box.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0));
 	}
 }
 
-detector::detector(int width, int height) : INPUT_WIDTH(640.0), INPUT_HEIGHT(640.0)
+detector::detector(int width, int height)
 {
 	this->width = width;
 	this->height = height;
-
-	// const float INPUT_WIDTH = 416.0; //yolo3 tiny
-	// const float INPUT_HEIGHT = 416.0; // yolo3 tiny
 
 	char cwd[MAX_PATH];
 	GetCurrentDirectoryA(MAX_PATH, cwd);
@@ -124,6 +115,8 @@ detector::detector(int width, int height) : INPUT_WIDTH(640.0), INPUT_HEIGHT(640
 	std::cout << "DATASET LABEL SIZE = " << m_classes.size() << std::endl;
 
 	m_net = cv::dnn::readNet(ModelPath);
+	if (m_net.empty())
+		std::cerr << "Can't load network" << std::endl;
 
 	if (cv::cuda::getCudaEnabledDeviceCount() > 0)
 	{
