@@ -1,34 +1,44 @@
 #pragma once
 #include "opencv2/opencv.hpp"
 #include "opencv2/core/ocl.hpp"
+
 #include <string>
 #include <vector>
-
 #include <fstream>
-// #include "screenshot.h"
+
+#include <Windows.h>
+
+#include "defines.h"
 
 class detector
 {
 public:
 	detector(int width, int height);
 	~detector(){};
-	void start(cv::Mat &image);
 
-	// screenshot screen;
-	bool yolov3;
+	void detectYolo(cv::Mat &image);
+
 	cv::dnn::Net m_net;
 	std::vector<std::string> m_classes;
+
 private:
-	float m_confidence = 0.5f;
-	float m_threshold = 0.35f;
 	int width;
 	int height;
 
-	void postprocess(cv::Mat &frame, const std::vector<cv::Mat> &outs);
-	void draw_box(float conf, int left, int top, int right, int bottom, cv::Mat &frame);
+	struct Detection
+	{
+		int class_id;
+		float confidence;
+		cv::Rect box;
+	};
 
-	void detectYoloV3(cv::Mat &image);
-	void detectYoloV5(cv::Mat &image);
+	const float INPUT_WIDTH;
+	const float INPUT_HEIGHT;
 
-	// std::vector<cv::String> get_outputs_names(const cv::dnn::Net &net);
+	const float SCORE_THRESHOLD = 0.2;
+	const float NMS_THRESHOLD = 0.4;
+	const float CONFIDENCE_THRESHOLD = 0.4;
+
+	void detect(cv::Mat &image, cv::dnn::Net &net, std::vector<Detection> &output, const std::vector<std::string> &className);
+	cv::Mat format_yolov5(const cv::Mat &source);
 };

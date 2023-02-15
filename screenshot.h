@@ -2,13 +2,12 @@
 #include <opencv2/opencv.hpp>
 #include <windows.h>
 
-class screenshot {
+class screenshot
+{
 public:
 	screenshot(std::string proccessName);
 	~screenshot();
-	cv::Mat& get();
-
-	void getAndSetProcessScreenSize(HWND hwnd);
+	cv::Mat &get();
 
 	int getHeight() { return m_height; }
 	int getWidth() { return m_width; }
@@ -25,10 +24,8 @@ private:
 	int m_left;
 	int m_top;
 
-	char* m_data;
-	cv::Mat* m_screen;
+	char *m_data;
+	cv::Mat *m_screen;
 
 	HGDIOBJ m_hGDI_temp;
-
-	bool processFound;
 };

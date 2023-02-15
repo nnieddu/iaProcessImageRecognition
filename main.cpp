@@ -29,14 +29,18 @@ void disableOrActivate(bool &activate, bool &exit)
 	}
 }
 
-
-int main()
+int main(int ac, char **av)
 {
+	std::cout << std::endl << std::endl << std::endl; ///// TESTING
 	FpsCounter countFps;
 	bool activate = true;
 	bool exit = false;
-	screenshot screen(" ");
+	std::string processName;
 
+	if (ac == 2 && av[1])
+		processName = av[1];
+
+	screenshot screen(processName);
 	detector detectObj(screen.getWidth(), screen.getHeight());
 	cv::Mat frame;
 
@@ -45,22 +49,30 @@ int main()
 	// cv::namedWindow("Result", cv::WINDOW_GUI_EXPANDED );
 	// cv::setWindowProperty("Result", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
 
+	int moyFps = 0; ///
+	int nbrOfBoucle = 0; ///
+
 	while (!exit)
 	{
 		disableOrActivate(activate, exit);
 		while (activate)
 		{
 				countFps.setCurrentTick();
+
+				nbrOfBoucle++;
+				moyFps += countFps.get();
+				
 				disableOrActivate(activate, exit);
 				frame = screen.get();
-				detectObj.start(frame);
-				cv::putText(frame, std::to_string(countFps.updateAndGet()), cv::Point(10, 25), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2);
-				// std::cout << countFps.updateAndGet() << std::endl;
+				detectObj.detectYolo(frame);
+				cv::putText(frame, std::to_string(countFps.get()), cv::Point(10, 25), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2);
 				cv::imshow("Result", frame);
 				cv::waitKey(1);
+				countFps.update();
 		}
 	}
 	cv::destroyAllWindows();
+	std::cout << "FPS = " << moyFps / nbrOfBoucle << std::endl;
 	std::cout << "CLEAN EXIT" << std::endl;
 	return 0;
 }

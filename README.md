@@ -8,7 +8,7 @@ You can try it with the realease version who's published with everything you nee
 If you want to compile this with source you will need ton follow some tutorial :   
    
 - Build openCV from source with CUDA if your GPU is compatible(at least +50% perf)    
- -You can use pre-built version if not or compile from source without CUDA (i recommened using YOLOv3-tiny in this case if you need lot of FPS).
+- You can use pre-built version if not or compile from source without CUDA (i recommened using YOLOv3-tiny in this case if you need  lot of FPS).
    
 ## WIP GUI :      
 - https://docs.opencv.org/4.x/dc/d46/group__highgui__qt.html  
