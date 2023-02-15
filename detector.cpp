@@ -52,18 +52,16 @@ void detector::detect(cv::Mat &image, cv::dnn::Net &net, std::vector<Detection> 
 			{
 				confidences.push_back(confidence);
 
-				class_ids.push_back(class_id.x);
-
-				float x = data[0];
-				float y = data[1];
-				float w = data[2];
-				float h = data[3];
-				int left = int((x - 0.5 * w) * x_factor);
-				int top = int((y - 0.5 * h) * y_factor);
-				int width = int(w * x_factor);
-				int height = int(h * y_factor);
-				boxes.push_back(cv::Rect(left, top, width, height));
-			}
+			// 	float x = data[0];
+			// 	float y = data[1];
+			// 	float w = data[2];
+			// 	float h = data[3];
+			// 	int left = int((x - 0.5 * w) * x_factor);
+			// 	int top = int((y - 0.5 * h) * y_factor);
+			// 	int width = int(w * x_factor);
+			// 	int height = int(h * y_factor);
+			// 	boxes.push_back(cv::Rect(left, top, width, height));
+			// }
 		}
 
 		data += 85;
@@ -144,4 +142,6 @@ detector::detector(int width, int height) : INPUT_WIDTH(640.0), INPUT_HEIGHT(640
 		m_net.setPreferableBackend(cv::dnn::DNN_BACKEND_DEFAULT);
 		m_net.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
 	}
+
+ m_activation_range = static_cast<int>(ACTIVATION_RANGE / 2);
 }

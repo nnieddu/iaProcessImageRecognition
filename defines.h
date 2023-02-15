@@ -11,8 +11,7 @@
 #define MODEL_FOLDER "..\\..\\IAmodels\\yolo-v5\\"
 #define LABELS_FILE_NAME "classes.txt"
 #define YOLO_CFG_FILE_NAME ""
-#define YOLO_WEIGHTS_FILE_NAME "yolov5n.onnx"
-// #define YOLO_WEIGHTS_FILE_NAME "yolov5s.onnx"
+#define YOLO_WEIGHTS_FILE_NAME "yolov5s.onnx"
 
 // #define MODEL_FOLDER "..\\..\\IAmodels\\yolo-v7\\"
 // #define LABELS_FILE_NAME "coco_classes.txt"
