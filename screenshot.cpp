@@ -33,6 +33,9 @@ screenshot::screenshot(std::string proccessName)
 	m_width /= 2;	 ////// TESTING
 	m_height /= 2; ///// TESTING
 	std::cout << m_width << " " << m_height << std::endl; ///// TESTING
+	m_width = 416; ///// TESTING
+	m_height = 416; ///// TESTING
+
 
 	// Create a bitmap compatible with the window DC, with the size of the client rectangle
 	m_hBitmap = CreateCompatibleBitmap(m_hWDC, m_width, m_height);

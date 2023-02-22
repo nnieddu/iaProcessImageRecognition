@@ -64,7 +64,8 @@ int main(int ac, char **av)
 				
 				disableOrActivate(activate, exit);
 				frame = screen.get();
-				detectObj.detectYolo(frame);
+				// detectObj.detectYolo(frame);
+				detectObj.start(frame);
 				cv::putText(frame, std::to_string(countFps.get()), cv::Point(10, 25), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2);
 				cv::imshow("Result", frame);
 				cv::waitKey(1);
