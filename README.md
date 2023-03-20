@@ -5,7 +5,7 @@ An Unix version will be shared later.
    
 <!-- You can try it with the realease version who's published with everything you need for testing (dll and pre-trained model with links below).    -->
    
-If you want to compile this with source you will need ton follow some tutorial :   
+If you want to compile this from source you will need ton follow some tutorial :   
    
 - Build openCV from source with CUDA if your GPU is compatible(at least +50% perf)    
 - You can use pre-built version if not or compile from source without CUDA (i recommened using YOLOv3-tiny in this case if you need lot of FPS).
