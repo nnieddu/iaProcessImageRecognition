@@ -1,6 +1,6 @@
 # (WIP) iaProcessImageRecognition   
    
-This software used Windows library for catch screenshot of a process and for keyboard handling.   
+This software used Windows library to take screenshot of a process and to managing keyboard handling.   
 An Unix version will be shared later.   
    
 <!-- You can try it with the realease version who's published with everything you need for testing (dll and pre-trained model with links below).    -->
